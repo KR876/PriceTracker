@@ -1,6 +1,7 @@
 import json
 import logging
 from database.db_manager import DatabaseManager
+from scrapers.Prisma import PrismaScraper
 from scrapers.rimi import RimiScraper
 
 logging.basicConfig(
@@ -22,7 +23,7 @@ def run():
     config = load_config()
     db = DatabaseManager()
 
-    scraper = RimiScraper(config, db)
+    scraper = PrismaScraper(config, db)
     scraper.run()
 
     stats = db.get_stats()

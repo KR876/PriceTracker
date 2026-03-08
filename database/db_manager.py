@@ -31,6 +31,7 @@ class DatabaseManager:
 
                 CREATE INDEX IF NOT EXISTS idx_prices_product ON prices(product_id);
                 CREATE INDEX IF NOT EXISTS idx_prices_time    ON prices(scraped_at);
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_prices_unique ON prices(product_id, scraped_at);
             ''')
 
     def save_product_and_price(self, product_id, name, category, price, scraped_at, currency='EUR'):
@@ -40,7 +41,7 @@ class DatabaseManager:
                 VALUES (?, ?, ?)
             ''', (product_id, name, category))
             conn.execute('''
-                INSERT INTO prices (product_id, price, currency, scraped_at)
+                INSERT OR IGNORE INTO prices (product_id, price, currency, scraped_at)
                 VALUES (?, ?, ?, ?)
             ''', (product_id, price, currency, scraped_at))
 
