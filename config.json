@@ -1,0 +1,6 @@
+{
+  "delay": 1.0,
+  "page_size": 100,
+  "timeout": 10,
+  "user_agent": "PriceTracker/1.0 (student research project)"
+}
