@@ -42,6 +42,9 @@ class PrismaScraper(BaseScraper):
 
         return categories
 
+    def build_url(self, slug: str, cat_id: str, page: int) -> tuple[str, dict]:
+        raise NotImplementedError('Prisma uses scrape_category directly')
+
     def _fetch_products_page(self, slug: str, offset: int, limit: int = None):
         if limit is None:
             limit = self.page_size
@@ -116,6 +119,9 @@ class PrismaScraper(BaseScraper):
 
             response = self._fetch_products_page(slug, offset, limit)
 
+            if response is None:
+                break
+
             data = response.json()
             products_data = data.get('data', {}).get('store', {}).get('products', {})
 
@@ -129,13 +135,15 @@ class PrismaScraper(BaseScraper):
                 break
 
             for p in products:
-                self.db.save_product_and_price(
+                composite_id = f"prisma_{cat_id}_{p['id']}"
+                result = self.db.save_product_and_price(
                     product_id=p['id'],
                     name=p['name'],
                     category=cat_id,
                     price=p['price'],
                     scraped_at=scraped_at,
-                    currency=p['currency']
+                    currency=p['currency'],
+                    store='prisma'
                 )
                 total += 1
 

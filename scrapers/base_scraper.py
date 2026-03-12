@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 import logging
 import time
@@ -36,9 +38,10 @@ class BaseScraper(ABC):
             return None
 
     @abstractmethod
-    def get_categories(self) -> list[tuple[str, str, str]]:
+    def get_categories(self) -> Any:
         """Return list of (name, slug, category_id) for all leaf categories."""
-        pass
+        categories = self.get_categories()
+        print(categories[:5])
 
     @abstractmethod
     def build_url(self, slug: str, cat_id: str, page: int) -> tuple[str, dict]:
@@ -79,7 +82,8 @@ class BaseScraper(ABC):
                         category=cat_id,
                         price=p['price'],
                         scraped_at=scraped_at,
-                        currency=p.get('currency', 'EUR')
+                        currency=p.get('currency', 'EUR'),
+                        store=self.store_name
                     )
                     total += 1
 

@@ -17,7 +17,8 @@ class DatabaseManager:
                 CREATE TABLE IF NOT EXISTS products (
                     id       TEXT PRIMARY KEY,
                     name     TEXT,
-                    category TEXT
+                    category TEXT,
+                    store    TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS prices (
@@ -34,16 +35,18 @@ class DatabaseManager:
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_prices_unique ON prices(product_id, scraped_at);
             ''')
 
-    def save_product_and_price(self, product_id, name, category, price, scraped_at, currency='EUR'):
+    def save_product_and_price(self, product_id, name, category, price, scraped_at, currency='EUR', store=None):
+        composite_id = f"{store}_{category}_{product_id}"
         with self._connect() as conn:
+            cursor = conn.execute('''
+                                  INSERT OR IGNORE INTO products (id, name, category, store)
+                                  VALUES (?, ?, ?, ?)
+                                  ''', (composite_id, name, category, store))
+            print(f"products rowcount: {cursor.rowcount}, id: {composite_id}")
             conn.execute('''
-                INSERT OR IGNORE INTO products (id, name, category)
-                VALUES (?, ?, ?)
-            ''', (product_id, name, category))
-            conn.execute('''
-                INSERT OR IGNORE INTO prices (product_id, price, currency, scraped_at)
-                VALUES (?, ?, ?, ?)
-            ''', (product_id, price, currency, scraped_at))
+                         INSERT OR IGNORE INTO prices (product_id, price, currency, scraped_at)
+                         VALUES (?, ?, ?, ?)
+                         ''', (composite_id, price, currency, scraped_at))
 
     def get_stats(self):
         with self._connect() as conn:

@@ -1,8 +1,10 @@
 import json
 import logging
+import sys
 from database.db_manager import DatabaseManager
 from scrapers.Prisma import PrismaScraper
 from scrapers.rimi import RimiScraper
+from scrapers.Selver import SelverScraper
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,8 +25,25 @@ def run():
     config = load_config()
     db = DatabaseManager()
 
-    scraper = PrismaScraper(config, db)
-    scraper.run()
+    scrapers = []
+
+    if len(sys.argv) > 1:
+        names = sys.argv[1:]
+        scraper_map = {
+            'rimi': RimiScraper,
+            'prisma': PrismaScraper,
+            'selver': SelverScraper,
+        }
+        for name in names:
+            if name in scraper_map:
+                scrapers.append(scraper_map[name](config, db))
+            else:
+                logging.warning(f'Unknown scraper: {name}')
+    else:
+        scrapers = [RimiScraper(config, db), PrismaScraper(config, db)]
+
+    for scraper in scrapers:
+        scraper.run()
 
     stats = db.get_stats()
     logging.info(f'Database: {stats["products"]} products, {stats["price_records"]} price records')
