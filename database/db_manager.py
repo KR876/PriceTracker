@@ -29,6 +29,13 @@ class DatabaseManager:
                     scraped_at TEXT NOT NULL,
                     FOREIGN KEY (product_id) REFERENCES products(id)
                 );
+                    
+                CREATE TABLE IF NOT EXISTS categories (
+                    id   TEXT,
+                    store TEXT,
+                    name TEXT,
+                    PRIMARY KEY (id, store)
+                );
 
                 CREATE INDEX IF NOT EXISTS idx_prices_product ON prices(product_id);
                 CREATE INDEX IF NOT EXISTS idx_prices_time    ON prices(scraped_at);
@@ -47,6 +54,13 @@ class DatabaseManager:
                          INSERT OR IGNORE INTO prices (product_id, price, currency, scraped_at)
                          VALUES (?, ?, ?, ?)
                          ''', (composite_id, price, currency, scraped_at))
+
+    def save_category(self, cat_id, store, name):
+        with self._connect() as conn:
+            conn.execute('''
+                         INSERT OR IGNORE INTO categories (id, store, name)
+                         VALUES (?, ?, ?)
+                         ''', (str(cat_id), store, name))
 
     def get_stats(self):
         with self._connect() as conn:

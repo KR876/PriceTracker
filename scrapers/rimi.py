@@ -38,6 +38,7 @@ class RimiScraper(BaseScraper):
                     cat_id = parts[1]
                     slug = parts[0].split('/tooted/')[-1]
                     result.append((node.get('name', ''), slug, cat_id))
+                    self.db.save_category(cat_id, 'rimi', node.get('name', ''))
 
     def build_url(self, slug: str, cat_id: str, page: int) -> tuple[str, dict]:
         url = f'{BASE_URL}/epood/ee/tooted/{slug}/c/{cat_id}'

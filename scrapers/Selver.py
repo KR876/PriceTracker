@@ -44,6 +44,7 @@ class SelverScraper(BaseScraper):
                 url_key = node.get('url_key', '')
                 if cat_id and url_key:
                     result.append((name, url_key, cat_id))
+                    self.db.save_category(cat_id, 'selver', name)
 
     def build_url(self, slug: str, cat_id: str, page: int) -> tuple[str, dict]:
         request = {
