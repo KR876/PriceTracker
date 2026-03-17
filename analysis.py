@@ -14,103 +14,63 @@ df = pd.read_sql_query('''
 ''', conn)
 conn.close()
 
-stores = ['rimi', 'selver']
-
-print("=" * 80)
-print("HINNAVÕRDLUS KATEGOORIATE KAUPA — RIMI vs SELVER")
-print("=" * 80)
+STORES = ['rimi', 'selver', 'prisma']
 
 rows = []
 for cat_name, store_cats in CATEGORY_MAP.items():
     store_data = {}
-    valid = True
-    for store in stores:
+    for store in STORES:
         if store not in store_cats:
-            valid = False
-            break
+            continue
         ids = store_cats[store]
         sub = df[(df['store'] == store) & (df['category'].isin(ids))]
-        if sub.empty:
-            valid = False
-            break
-        store_data[store] = sub
+        if not sub.empty:
+            store_data[store] = sub
 
-    if not valid:
+    # Skip if fewer than 2 stores have data
+    if len(store_data) < 2:
         continue
 
-    rimi_df = store_data['rimi']
-    selver_df = store_data['selver']
+    row = {'Kategooria': cat_name}
+    for store in STORES:
+        if store in store_data:
+            row[f'{store}_avg'] = round(store_data[store]['price'].mean(), 2)
+            row[f'{store}_count'] = len(store_data[store])
+        else:
+            row[f'{store}_avg'] = None
+            row[f'{store}_count'] = 0
+    rows.append(row)
 
-    rimi_avg = rimi_df['price'].mean()
-    selver_avg = selver_df['price'].mean()
-    diff = selver_avg - rimi_avg
-    cheaper = 'Rimi' if diff > 0 else 'Selver'
+results = pd.DataFrame(rows).sort_values('Kategooria')
 
-    rows.append({
-        'Kategooria': cat_name,
-        'Rimi kesk.': round(rimi_avg, 2),
-        'Selver kesk.': round(selver_avg, 2),
-        'Vahe': round(diff, 2),
-        'Odavam': cheaper,
-        'Rimi tooteid': len(rimi_df),
-        'Selver tooteid': len(selver_df),
-    })
-
-results = pd.DataFrame(rows)
-
-# Üldine kokkuvõte
-print(f"\n{'Kategooria':<35} {'Rimi':>8} {'Selver':>8} {'Vahe':>8} {'Odavam':<10}")
+# Per-category comparison table
+print("=" * 75)
+print("HINNAVÕRDLUS — RIMI vs SELVER vs PRISMA")
+print("=" * 75)
+print(f"{'Kategooria':<35} {'Rimi':>8} {'Selver':>8} {'Prisma':>8}  Odavam")
 print("-" * 75)
-for _, row in results.sort_values('Kategooria').iterrows():
-    print(f"{row['Kategooria']:<35} {row['Rimi kesk.']:>8.2f} {row['Selver kesk.']:>8.2f} {row['Vahe']:>+8.2f} {row['Odavam']:<10}")
 
-print("\n" + "=" * 80)
-print("KOKKUVÕTE")
-print("=" * 80)
-rimi_wins = (results['Vahe'] > 0).sum()
-selver_wins = (results['Vahe'] < 0).sum()
-print(f"Rimi odavam:   {rimi_wins} kategoorias")
-print(f"Selver odavam: {selver_wins} kategoorias")
-print(f"Rimi keskmine vahe kui odavam:   {results[results['Vahe'] > 0]['Vahe'].mean():.2f} EUR")
-print(f"Selver keskmine vahe kui odavam: {results[results['Vahe'] < 0]['Vahe'].mean():.2f} EUR")
-
-print("\n" + "=" * 80)
-print("TOP 10 — RIMI ODAVAM")
-print("=" * 80)
-top_rimi = results[results['Vahe'] > 0].nlargest(10, 'Vahe')
-for _, row in top_rimi.iterrows():
-    print(f"{row['Kategooria']:<35} Rimi {row['Rimi kesk.']:.2f} vs Selver {row['Selver kesk.']:.2f} (vahe {row['Vahe']:+.2f})")
-
-print("\n" + "=" * 80)
-print("TOP 10 — SELVER ODAVAM")
-print("=" * 80)
-top_selver = results[results['Vahe'] < 0].nsmallest(10, 'Vahe')
-for _, row in top_selver.iterrows():
-    print(f"{row['Kategooria']:<35} Selver {row['Selver kesk.']:.2f} vs Rimi {row['Rimi kesk.']:.2f} (vahe {row['Vahe']:+.2f})")
-
-print("\n" + "=" * 80)
-print("ODAVAIM JA KALLEIM TOODE KATEGOORIAS")
-print("=" * 80)
-for cat_name, store_cats in CATEGORY_MAP.items():
-    store_data = {}
-    valid = True
-    for store in stores:
-        if store not in store_cats:
-            valid = False
-            break
-        ids = store_cats[store]
-        sub = df[(df['store'] == store) & (df['category'].isin(ids))]
-        if sub.empty:
-            valid = False
-            break
-        store_data[store] = sub
-    if not valid:
+for _, row in results.iterrows():
+    avgs = {s: row[f'{s}_avg'] for s in STORES if pd.notna(row[f'{s}_avg'])}
+    if not avgs:
         continue
+    cheapest = min(avgs, key=avgs.get)
+    rimi   = f"{row['rimi_avg']:.2f}"   if pd.notna(row['rimi_avg'])   else "  N/A"
+    selver = f"{row['selver_avg']:.2f}" if pd.notna(row['selver_avg']) else "  N/A"
+    prisma = f"{row['prisma_avg']:.2f}" if pd.notna(row['prisma_avg']) else "  N/A"
+    print(f"{row['Kategooria']:<35} {rimi:>8} {selver:>8} {prisma:>8}  {cheapest.capitalize()}")
 
-    print(f"\n{cat_name}:")
-    for store in stores:
-        sub = store_data[store]
-        cheapest = sub.loc[sub['price'].idxmin()]
-        priciest = sub.loc[sub['price'].idxmax()]
-        print(f"  {store.capitalize():<8} odavaim: {cheapest['price']:.2f} EUR — {cheapest['name'][:50]}")
-        print(f"  {store.capitalize():<8} kalleim: {priciest['price']:.2f} EUR — {priciest['name'][:50]}")
+# Overall summary
+print("\n" + "=" * 75)
+print("KOKKUVÕTE — KESKMINE HIND KÕIGIS KATEGOORIATES")
+print("=" * 75)
+
+for store in STORES:
+    col = f'{store}_avg'
+    valid = results[col].dropna()
+    wins = 0
+    for _, row in results.iterrows():
+        avgs = {s: row[f'{s}_avg'] for s in STORES if pd.notna(row[f'{s}_avg'])}
+        if avgs and min(avgs, key=avgs.get) == store:
+            wins += 1
+    print(f"{store.capitalize():<10} keskmine kategooria hind: {valid.mean():.2f} EUR  |  odavam {wins} kategoorias")
