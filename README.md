@@ -1,13 +1,13 @@
 # PriceTracker
 
-A Python tool that automatically collects grocery price data from three major Estonian retailers and stores it in a SQLite database for cross-store comparison and price history tracking.
+Scrapes grocery prices from Rimi, Selver and Prisma into a local SQLite database. Supports cross-store price comparison and builds a price history over time with repeated runs.
+
 
 ## Features
 
-- **Three-store support**: Rimi, Selver, Prisma (~50,000 products total)
+- **Three-store support**: Rimi, Selver, Prisma (~60,000 products total)
 - **Price history**: each scraping run appends timestamped price records, building a time series
 - **Cross-store analysis**: unified category mapping across all three stores
-- **Modular design**: each store scraper inherits from a shared base class
 
 ## How Each Scraper Works
 
@@ -21,15 +21,9 @@ A Python tool that automatically collects grocery price data from three major Es
 ```bash
 pip install requests beautifulsoup4 pandas rapidfuzz
 
-# Run all stores
-python main.py
-
-# Run specific stores
-python main.py rimi
-python main.py rimi selver
-
-# Cross-store price analysis
-python analysis.py
+python main.py             # Run all stores
+python main.py rimi selver # Run specific stores
+python analysis.py         # Cross-store analasysis
 ```
 
 ## Database Schema
@@ -58,7 +52,7 @@ CREATE TABLE categories (
 
 ## Price History
 
-Re-running the scraper on a different day automatically adds new price records without overwriting old ones. Over time this builds a genuine price time series per product.
+Re-running the scraper appends new price records without touching old ones, so you get a price time series automatically.
 
 ## Tech Stack
 
