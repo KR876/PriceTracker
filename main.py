@@ -5,6 +5,7 @@ from database.db_manager import DatabaseManager
 from scrapers.Prisma import PrismaScraper
 from scrapers.rimi import RimiScraper
 from scrapers.Selver import SelverScraper
+from scrapers.Barbora import BarboraScraper
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,6 +34,7 @@ def run():
             'rimi': RimiScraper,
             'prisma': PrismaScraper,
             'selver': SelverScraper,
+            'barbora': BarboraScraper,
         }
         for name in names:
             if name in scraper_map:

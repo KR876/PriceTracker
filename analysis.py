@@ -14,7 +14,7 @@ df = pd.read_sql_query('''
 ''', conn)
 conn.close()
 
-STORES = ['rimi', 'selver', 'prisma']
+STORES = ['rimi', 'selver', 'prisma', 'barbora']
 
 rows = []
 for cat_name, store_cats in CATEGORY_MAP.items():
@@ -44,11 +44,11 @@ for cat_name, store_cats in CATEGORY_MAP.items():
 results = pd.DataFrame(rows).sort_values('Kategooria')
 
 # Per-category comparison table
-print("=" * 75)
+print("=" * 85)
 print("HINNAVÕRDLUS — RIMI vs SELVER vs PRISMA")
-print("=" * 75)
+print("=" * 85)
 print(f"{'Kategooria':<35} {'Rimi':>8} {'Selver':>8} {'Prisma':>8}  Odavam")
-print("-" * 75)
+print("-" * 85)
 
 for _, row in results.iterrows():
     avgs = {s: row[f'{s}_avg'] for s in STORES if pd.notna(row[f'{s}_avg'])}
@@ -58,16 +58,19 @@ for _, row in results.iterrows():
     rimi   = f"{row['rimi_avg']:.2f}"   if pd.notna(row['rimi_avg'])   else "  N/A"
     selver = f"{row['selver_avg']:.2f}" if pd.notna(row['selver_avg']) else "  N/A"
     prisma = f"{row['prisma_avg']:.2f}" if pd.notna(row['prisma_avg']) else "  N/A"
+    barbora = f"{row['barbora_avg']:.2f}" if pd.notna(row['barbora_avg']) else "  N/A"
     print(f"{row['Kategooria']:<35} {rimi:>8} {selver:>8} {prisma:>8}  {cheapest.capitalize()}")
 
 # Overall summary
-print("\n" + "=" * 75)
+print("\n" + "=" * 85)
 print("KOKKUVÕTE — KESKMINE HIND KÕIGIS KATEGOORIATES")
-print("=" * 75)
+print("=" * 85)
 
 for store in STORES:
     col = f'{store}_avg'
     valid = results[col].dropna()
+    if valid.empty:
+        continue
     wins = 0
     for _, row in results.iterrows():
         avgs = {s: row[f'{s}_avg'] for s in STORES if pd.notna(row[f'{s}_avg'])}
